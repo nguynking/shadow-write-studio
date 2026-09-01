@@ -20,12 +20,6 @@ const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 const YOUTUBE_BROWSER_USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
   "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-// This public browser key is shipped in YouTube's own player configuration.
-// It is a fallback only when a cloud bot-check page omits that configuration.
-const YOUTUBE_PUBLIC_INNERTUBE_KEY = [
-  "AIzaSyAO_",
-  "FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
-].join("");
 
 const YOUTUBE_HOSTS = new Set([
   "youtube.com",
@@ -139,6 +133,7 @@ async function fetchYoutubeEmbedPage(
     "Accept-Language": language,
     "User-Agent": YOUTUBE_BROWSER_USER_AGENT,
   };
+  let lastBody = "";
 
   for (const hostname of ["www.youtube-nocookie.com", "www.youtube.com"]) {
     try {
@@ -150,6 +145,7 @@ async function fetchYoutubeEmbedPage(
       if (!response.ok) continue;
 
       const body = await response.text();
+      lastBody = body;
       if (body.includes("INNERTUBE_API_KEY")) {
         return new Response(body, { status: 200 });
       }
@@ -158,10 +154,7 @@ async function fetchYoutubeEmbedPage(
     }
   }
 
-  return new Response(
-    JSON.stringify({ INNERTUBE_API_KEY: YOUTUBE_PUBLIC_INNERTUBE_KEY }),
-    { status: 200, headers: { "Content-Type": "application/json" } },
-  );
+  return new Response(lastBody, { status: lastBody ? 200 : 502 });
 }
 
 function selectLargestThumbnail(
