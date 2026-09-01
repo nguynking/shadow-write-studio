@@ -167,7 +167,7 @@ Important limits:
 
 - Videos and pasted caption timelines are limited to 30 minutes.
 - Pasted caption text is limited to 1,500,000 characters.
-- Direct YouTube caption retrieval falls back after 12 seconds. AI transcription can take up to four minutes.
+- Direct YouTube caption retrieval falls back after 25 seconds. AI transcription can take up to four minutes.
 - Transcript responses use `Cache-Control: no-store`.
 
 ### `GET /api/dictionary?q=<term>`
@@ -193,7 +193,7 @@ Queries may contain letters, spaces, apostrophes, and hyphens, up to 64 characte
 
 ## Transcript reliability
 
-The app first uses `youtube-transcript-plus`, which depends on YouTube behavior outside the supported public caption-download contract. YouTube can block those requests from cloud hosting even when a video has captions. When that happens, the app sends the public YouTube URL to Gemini 3.7 Flash through Vercel AI Gateway and asks for verbatim, time-aligned English speech.
+The app first uses `youtube-transcript-plus` with YouTube's public privacy-enhanced embed page. The embed page avoids a common cloud-hosting bot check on the normal watch page and still supplies the player caption tracks. When YouTube blocks both public caption paths, the app sends the public YouTube URL to Gemini 3.7 Flash through Vercel AI Gateway and asks for verbatim, time-aligned English speech.
 
 AI-generated timings are useful but not guaranteed to be frame-perfect. The interface labels AI-created transcripts so learners can check each phrase against the embedded video. The manual VTT/SRT path remains the most predictable fallback.
 

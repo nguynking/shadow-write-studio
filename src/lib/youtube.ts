@@ -17,6 +17,9 @@ import type {
 } from "@/types/learning";
 
 const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
+const YOUTUBE_BROWSER_USER_AGENT =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+  "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 const YOUTUBE_HOSTS = new Set([
   "youtube.com",
@@ -113,6 +116,35 @@ export class TranscriptServiceError extends Error {
 export interface YoutubeTranscriptData {
   video: VideoMetadata;
   segments: RawTranscriptSegment[];
+}
+
+/**
+ * YouTube often serves a bot-check page for /watch requests from cloud hosts,
+ * while its public embed page still contains the same player configuration.
+ * Supplying that page to youtube-transcript-plus avoids a false "no captions"
+ * result without downloading the video or requiring an API key.
+ */
+async function fetchYoutubeEmbedPage(
+  videoId: string,
+  language: string,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const headers = {
+    "Accept-Language": language,
+    "User-Agent": YOUTUBE_BROWSER_USER_AGENT,
+  };
+
+  const privacyEnhancedResponse = await fetch(
+    `https://www.youtube-nocookie.com/embed/${videoId}`,
+    { headers, signal },
+  );
+
+  if (privacyEnhancedResponse.ok) return privacyEnhancedResponse;
+
+  return fetch(`https://www.youtube.com/embed/${videoId}`, {
+    headers,
+    signal,
+  });
 }
 
 function selectLargestThumbnail(
@@ -221,6 +253,7 @@ export async function fetchYoutubeTranscriptData(
       retryDelay: 350,
       signal,
       videoDetails: true,
+      videoFetch: () => fetchYoutubeEmbedPage(videoId, language, signal),
     });
 
     return {

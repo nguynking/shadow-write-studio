@@ -29,7 +29,7 @@ export const maxDuration = 300;
 
 const MAX_VIDEO_DURATION_SECONDS = 30 * 60;
 const MAX_REQUEST_CHARACTERS = 1_500_000;
-const TRANSCRIPT_TIMEOUT_MS = 12_000;
+const TRANSCRIPT_TIMEOUT_MS = 25_000;
 
 const NO_STORE_HEADERS = {
   "Cache-Control": "no-store, max-age=0",
