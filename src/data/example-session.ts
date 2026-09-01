@@ -1,0 +1,81 @@
+export const EXAMPLE_VIDEO = {
+  id: "M7lc1UVf-VE",
+  title: "YouTube Developers Live: Embedded Web Player Customization",
+  author: "Google for Developers",
+  durationSeconds: 0,
+  thumbnailUrl: "https://i.ytimg.com/vi/M7lc1UVf-VE/hqdefault.jpg",
+  url: "https://www.youtube.com/watch?v=M7lc1UVf-VE",
+};
+
+export const EXAMPLE_CHUNKS = [
+  {
+    id: "example-1",
+    text: "Hey, everybody.",
+    startSeconds: 10.349,
+    endSeconds: 11.349,
+    durationSeconds: 1,
+  },
+  {
+    id: "example-2",
+    text: "Welcome to this week's show of YouTube Developers Live.",
+    startSeconds: 11.349,
+    endSeconds: 14.03,
+    durationSeconds: 2.681,
+  },
+  {
+    id: "example-3",
+    text: "I'm Jeff Posnick, coming to you from New York City.",
+    startSeconds: 14.03,
+    endSeconds: 16.18,
+    durationSeconds: 2.15,
+  },
+  {
+    id: "example-4",
+    text: "I'm a member of the Developer Relations team.",
+    startSeconds: 16.18,
+    endSeconds: 19.42,
+    durationSeconds: 3.24,
+  },
+  {
+    id: "example-5",
+    text: "And this week I'm really excited to talk to you about different ways of customizing the YouTube embedded player.",
+    startSeconds: 19.42,
+    endSeconds: 24.54,
+    durationSeconds: 5.12,
+  },
+  {
+    id: "example-6",
+    text: "Before I get started, though, I want a couple of ground rules.",
+    startSeconds: 24.54,
+    endSeconds: 28.029,
+    durationSeconds: 3.489,
+  },
+  {
+    id: "example-7",
+    text: "I want to talk about what we're going to be covering in today's show.",
+    startSeconds: 28.029,
+    endSeconds: 32.539,
+    durationSeconds: 4.51,
+  },
+  {
+    id: "example-8",
+    text: "There are a lot of different embedded players, and there are lots of ways to customize them.",
+    startSeconds: 32.539,
+    endSeconds: 36.8,
+    durationSeconds: 4.261,
+  },
+  {
+    id: "example-9",
+    text: "For this particular show, we're going to focus on the iframe embedded player.",
+    startSeconds: 36.8,
+    endSeconds: 45.17,
+    durationSeconds: 8.37,
+  },
+  {
+    id: "example-10",
+    text: "It's our current recommended way of embedding videos on web pages.",
+    startSeconds: 45.17,
+    endSeconds: 48.699,
+    durationSeconds: 3.529,
+  },
+] as const;

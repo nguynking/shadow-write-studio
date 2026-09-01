@@ -24,8 +24,8 @@ Shadowing lowers the listening and articulation barrier. Retrieval and transform
 
 ## Current features
 
-- Import a public English YouTube video up to 30 minutes long, or start with the built-in example.
-- Fall back to a clearly labeled Gemini transcript when YouTube blocks direct caption retrieval.
+- Import a public English YouTube video, or start with the built-in example.
+- Fall back to Gemini timecoded transcription when YouTube blocks caption access from the server.
 - Paste WebVTT or SubRip captions when automatic transcript retrieval fails.
 - Group caption fragments into short, speakable units from 3 to 12 seconds.
 - Search the transcript, select a sentence, seek to its timestamp, and loop it.
@@ -44,16 +44,18 @@ ShadowWrite does not assign a pronunciation or native-accent score. The current 
 
 Requirements:
 
-- Node.js 20.9 or newer
+- Node.js 22 or newer
 - npm
 - A modern browser with JavaScript, third-party embeds, and optional microphone access enabled
 
-No database is required. Direct captions, the built-in example, and manual VTT/SRT imports work without application secrets. The Gemini fallback uses Vercel AI Gateway with Vercel-managed OIDC authentication; the Vercel team must activate AI Gateway billing before that fallback can run.
+No database is required. Vercel deployments authenticate to AI Gateway automatically with OIDC. The Vercel team must have AI Gateway credits activated for automatic transcription fallback.
 
 ```bash
 git clone https://github.com/nguynking/shadow-write-studio.git
 cd shadow-write-studio
 npm ci
+npx vercel link
+npx vercel env pull .env.local
 npm run dev
 ```
 
@@ -85,7 +87,7 @@ npm run build
 | Next.js 16 App Router and React 19 | Application shell, route handlers, rendering, and responsive UI |
 | `StudioApp` | Coordinates the active video, transcript selection, practice modes, notebook, and progress |
 | YouTube IFrame Player API | Embedded playback, timestamp seeking, looping, and playback speed |
-| `POST /api/transcript` | Validates imports, tries direct captions first, uses Gemini video understanding when YouTube blocks them, parses VTT/SRT, and returns practice chunks |
+| `POST /api/transcript` | Validates imports, retrieves captions, falls back to Gemini through Vercel AI Gateway, parses VTT/SRT, and returns practice chunks |
 | Transcript utilities | Decode caption text, parse timestamps, remove rolling duplicates, and group cues into speakable units |
 | `GET /api/dictionary` | Normalizes Free Dictionary API results, with Datamuse definitions as a timeout fallback |
 | YouGlish JavaScript widget | Supplies timestamped real-world word and phrase examples |
@@ -128,6 +130,7 @@ Success:
 ```json
 {
   "source": "youtube",
+  "transcriptMethod": "captions",
   "video": {
     "id": "VIDEO_ID",
     "title": "Video title",
@@ -162,9 +165,9 @@ Error responses use this shape:
 
 Important limits:
 
-- Videos and pasted caption timelines are limited to 20 minutes.
+- Videos and pasted caption timelines are limited to 30 minutes.
 - Pasted caption text is limited to 1,500,000 characters.
-- Automatic retrieval times out after 15 seconds.
+- Direct YouTube caption retrieval falls back after 12 seconds. AI transcription can take up to four minutes.
 - Transcript responses use `Cache-Control: no-store`.
 
 ### `GET /api/dictionary?q=<term>`
@@ -190,11 +193,13 @@ Queries may contain letters, spaces, apostrophes, and hyphens, up to 64 characte
 
 ## Transcript reliability
 
-The route first uses `youtube-transcript-plus`, which depends on YouTube behavior outside the supported public caption-download contract. Cloud-hosted requests are frequently blocked even when the video has captions. When that happens, the route sends the public YouTube URL to Gemini through Vercel AI Gateway and requests a timecoded, structured transcript. AI-created transcripts are labeled in the interface because their words and timestamps can be imperfect.
+The app first uses `youtube-transcript-plus`, which depends on YouTube behavior outside the supported public caption-download contract. YouTube can block those requests from cloud hosting even when a video has captions. When that happens, the app sends the public YouTube URL to Gemini 3.7 Flash through Vercel AI Gateway and asks for verbatim, time-aligned English speech.
+
+AI-generated timings are useful but not guaranteed to be frame-perfect. The interface labels AI-created transcripts so learners can check each phrase against the embedded video. The manual VTT/SRT path remains the most predictable fallback.
 
 YouTube's official `captions.list` method returns caption-track metadata and requires authorization. Its official `captions.download` method requires the authenticated user to have permission to edit the video. The official API therefore cannot download transcript text for every arbitrary public URL.
 
-The Gemini fallback requires Vercel AI Gateway to be activated for the project. Vercel currently requires a payment card on the team before it unlocks monthly free AI Gateway credits. If neither automatic path is available:
+If both automatic paths fail:
 
 1. Keep the YouTube link in the source field.
 2. Choose **Paste VTT or SRT**.
@@ -208,8 +213,8 @@ Caption timestamps are also not frame-perfect. The YouTube player seeks to the n
 - Saved sentences, saved words, writing attempts, and aggregate statistics are stored in versioned browser `localStorage`.
 - Voice recordings are held as temporary browser object URLs for immediate playback. This application does not upload or persist the audio.
 - Clearing site data, changing browsers, or using another device removes or separates local progress.
-- Transcript route responses are not stored by this application. Identical Gemini requests may be cached by Vercel AI Gateway for up to seven days to reduce repeated cost and latency.
-- When direct captions are blocked, the public YouTube URL is sent to Google Gemini through Vercel AI Gateway for transcription. The app does not download or proxy the video file.
+- Transcript route responses are not cached by this application.
+- If direct caption retrieval fails, the public YouTube URL and video content are processed by Google Gemini through Vercel AI Gateway to create timed speech. Do not use private, sensitive, or confidential videos.
 - Dictionary queries pass through this server to Free Dictionary API and, when needed, Datamuse.
 - YouTube and YouGlish embeds load third-party scripts and media. Their own privacy policies and terms apply.
 
@@ -226,7 +231,7 @@ Use of embedded YouTube content is subject to the [YouTube Terms of Service](htt
 1. Expand supported transcript sources:
    - OAuth-based YouTube Captions API import for videos the signed-in user owns or can edit.
    - User-uploaded VTT/SRT as a first-class source.
-   - User-owned audio and video uploads through a durable background transcription workflow.
+   - User-owned audio and video uploads with explicit consent and retention controls.
 2. Add authentication, encrypted server-side progress, export, deletion, and cross-device sync.
 3. Add a productive review scheduler for saved phrases and recurring errors.
 4. Add staged writing feedback that asks for self-repair before showing a correction.
@@ -252,6 +257,8 @@ Platform behavior:
 - [YouTube IFrame Player API](https://developers.google.com/youtube/iframe_api_reference)
 - [YouTube `captions.list`](https://developers.google.com/youtube/v3/docs/captions/list)
 - [YouTube `captions.download`](https://developers.google.com/youtube/v3/docs/captions/download)
+- [Gemini video understanding and public YouTube URLs](https://ai.google.dev/gemini-api/docs/video-understanding)
+- [Vercel AI Gateway](https://vercel.com/docs/ai-gateway)
 - [YouGlish JavaScript API](https://youglish.com/api/doc/js-api)
 - [Free Dictionary API](https://dictionaryapi.dev/)
 - [Datamuse API](https://www.datamuse.com/api/)
